@@ -1,0 +1,94 @@
+# justfile — {{ project_name }}
+# Docs: https://github.com/casey/just
+# Запусти `just` чтобы увидеть все рецепты
+
+set dotenv-load := true
+set shell := ["bash", "-cu"]
+
+[private]
+default:
+    @just --list --unsorted
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# 🔥  ЕЖЕДНЕВНО
+# ═══════════════════════════════════════════════════════════════════════════════
+
+# Запустить стек (docker compose)
+dev:
+    docker compose up --build
+
+# Запустить тесты
+test *args:
+    uv run pytest tests/ -v {{ "{{args}}" }}
+
+# Авто-исправить стиль кода
+lint:
+    uv run ruff check src/ tests/ --fix
+
+# Отформатировать код
+format:
+    uv run ruff format src/ tests/
+
+# Полная проверка перед коммитом (format + lint)
+check: format lint
+    @echo "✅ Проверка пройдена."
+
+# Логи сервиса (по умолчанию: app)
+logs service="app":
+    docker compose logs -f {{ "{{service}}" }}
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# 📦  ЕЖЕНЕДЕЛЬНО
+# ═══════════════════════════════════════════════════════════════════════════════
+
+# Собрать Docker образы
+build:
+    docker compose build
+
+# Анализ цикломатической сложности (ruff C901)
+complexity:
+    @bash scripts/check_complexity.sh
+
+# Метрики Docker образа (вес, время сборки, слои)
+docker-stats:
+    @bash scripts/check_docker_stats.sh
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# 🔧  РЕДКО
+# ═══════════════════════════════════════════════════════════════════════════════
+
+# Установить зависимости
+install:
+    uv sync --dev
+
+# Первоначальная настройка проекта
+setup: install
+    uv python pin {{ python_version }}
+    uv run pre-commit install
+    @echo "✅ Готово. Запусти 'just dev'."
+
+# Настроить branch protection в GitHub (запускается один раз)
+protect:
+    @bash scripts/setup_branch_protection.sh
+
+# Проверить неиспользуемые/отсутствующие зависимости
+deps-check:
+    uv run deptry src/
+
+# Shell внутри контейнера
+shell service="app":
+    docker compose exec {{ "{{service}}" }} bash
+
+# Забампить версию (commitizen + CHANGELOG)
+version-bump:
+    uv run cz bump --changelog
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# ☠️  ОПАСНО
+# ═══════════════════════════════════════════════════════════════════════════════
+
+# Остановить стек и удалить все volumes (ДАННЫЕ ПОТЕРЯЮТСЯ)
+down-volumes:
+    @echo "⚠️  Все volumes будут удалены."
+    @read -p "Введи 'yes': " c && [ "$$c" = "yes" ]
+    docker compose down -v

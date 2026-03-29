@@ -1,0 +1,82 @@
+_subdirectory: template
+_templates_suffix: .jinja
+_answers_file: .copier-answers.yml
+_min_copier_version: "9.0"
+
+_exclude:
+  - copier.yaml
+  - "*.py[co]"
+  - __pycache__
+  - .git
+  - .venv
+  - uv.lock
+
+_skip_if_exists:
+  - uv.lock
+
+_tasks:
+  - command: uv python pin {{ python_version }}
+  - command: uv sync --dev
+  - command: uv run --no-sync pre-commit install || true
+  - command: chmod +x scripts/check_complexity.sh scripts/check_docker_stats.sh scripts/setup_branch_protection.sh
+
+# ─── PROJECT ──────────────────────────────────────────────────────────────────
+
+project_name:
+  type: str
+  help: "Human-readable project name (e.g. My Service)"
+  default: "My Project"
+
+project_slug:
+  type: str
+  help: "Python module name — lowercase, underscores only"
+  default: "{{ project_name | lower | replace(' ', '_') | replace('-', '_') }}"
+  validator: >-
+    {% if not (project_slug | regex_search('^[a-z][a-z0-9_]+$')) %}
+    project_slug must be lowercase letters, digits, and underscores only
+    {% endif %}
+
+description:
+  type: str
+  help: "Short one-line description"
+  default: "A Python project"
+
+author_name:
+  type: str
+  help: "Your full name"
+
+author_email:
+  type: str
+  help: "Your email address"
+
+github_org:
+  type: str
+  help: "GitHub organization or username"
+  default: "my-org"
+
+# ─── PYTHON ───────────────────────────────────────────────────────────────────
+
+python_version:
+  type: str
+  help: "Target Python version"
+  default: "3.13"
+  choices:
+    - "3.12"
+    - "3.13"
+
+# ─── DOCKER ───────────────────────────────────────────────────────────────────
+
+app_port:
+  type: int
+  help: "Application port"
+  default: 8000
+
+include_postgres:
+  type: bool
+  help: "Include PostgreSQL service in docker-compose?"
+  default: false
+
+include_redis:
+  type: bool
+  help: "Include Redis service in docker-compose?"
+  default: false

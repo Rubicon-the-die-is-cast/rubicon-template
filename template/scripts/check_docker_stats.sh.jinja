@@ -1,0 +1,48 @@
+#!/bin/bash
+# Метрики Docker образа: время сборки, вес, количество слоёв
+# Запуск: just docker-stats  или  bash scripts/check_docker_stats.sh
+
+IMAGE_NAME="{{ project_slug }}-trader"
+
+echo "🐳 Сборка и анализ Docker образа: $IMAGE_NAME"
+echo "────────────────────────────────────────────────────────────────────────────"
+
+START_TIME=$(date +%s)
+
+docker build --no-cache --progress=plain \
+    -f docker/python/Dockerfile \
+    -t "$IMAGE_NAME" . 2>&1
+
+BUILD_EXIT=$?
+END_TIME=$(date +%s)
+BUILD_TIME=$((END_TIME - START_TIME))
+
+if [ $BUILD_EXIT -ne 0 ]; then
+    echo "❌ Сборка завершилась с ошибкой (код $BUILD_EXIT)"
+    exit $BUILD_EXIT
+fi
+
+IMAGE_SIZE=$(docker images --format "{{ '{{' }}.Size}}" "$IMAGE_NAME")
+LAYERS_COUNT=$(docker inspect "$IMAGE_NAME" | jq '.[0].RootFS.Layers | length')
+
+echo ""
+echo "────────────────────────────────────────────────────────────────────────────"
+echo "📈 DOCKER МЕТРИКИ:"
+echo "  🔹 Время сборки (cold):  ${BUILD_TIME} сек."
+echo "  🔹 Итоговый вес:         ${IMAGE_SIZE}"
+echo "  🔹 Количество слоёв:     ${LAYERS_COUNT}"
+echo "────────────────────────────────────────────────────────────────────────────"
+
+# Рекомендации
+if [ "$BUILD_TIME" -gt 180 ]; then
+    echo "💡 Сборка > 3 мин. Проверь кеширование uv в Dockerfile."
+fi
+if [ "$LAYERS_COUNT" -gt 12 ]; then
+    echo "💡 Много слоёв (${LAYERS_COUNT}). Объедини RUN-команды через &&."
+fi
+
+# Очистка тестового образа
+echo ""
+echo "🧹 Удаляю тестовый образ..."
+docker rmi "$IMAGE_NAME" > /dev/null 2>&1
+echo "✅ Готово."

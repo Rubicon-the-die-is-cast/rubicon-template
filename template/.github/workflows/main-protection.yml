@@ -1,0 +1,21 @@
+name: Branch Protection
+
+# Only dev → main is allowed.
+# All feature/chore/fix branches must target dev first.
+
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  check-source-branch:
+    name: Enforce dev → main only
+    runs-on: ubuntu-latest
+    steps:
+      - name: Block non-dev PRs to main
+        if: github.head_ref != 'dev'
+        run: |
+          echo "❌ PRs to main are only allowed from the 'dev' branch."
+          echo "   Your branch: ${{ github.head_ref }}"
+          echo "   Please target 'dev' instead."
+          exit 1

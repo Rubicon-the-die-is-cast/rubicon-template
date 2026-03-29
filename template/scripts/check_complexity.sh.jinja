@@ -1,0 +1,42 @@
+#!/bin/bash
+# Анализ цикломатической сложности функций через ruff C901
+# Запуск: just complexity  или  bash scripts/check_complexity.sh
+
+echo "📊 Анализ сложности функций в {{ project_name }}..."
+echo "────────────────────────────────────────────────────────────────────────────"
+
+DATA=$(uvx ruff check --output-format json --select C901 \
+    --config "lint.mccabe.max-complexity=1" . 2>/dev/null | \
+    jq -r '.[] | "\(.message)|\(.filename):\(.location.row)"' | \
+    sed -E 's/`([^`]+)` is too complex \(([0-9]+) > 1\)/\1|\2/')
+
+if [ -z "$DATA" ]; then
+    echo "✅ Функции с высокой сложностью не найдены."
+    exit 0
+fi
+
+echo "$DATA" | awk -F'|' '{printf "%-35s | %-10s | %s\n", $1, $2, $3}' | \
+    sort -t'|' -rn -k2 | \
+    column -t -s "|" -N "ФУНКЦИЯ,СЛОЖНОСТЬ,ФАЙЛ:СТРОКА"
+
+STATS=$(echo "$DATA" | awk -F'|' '
+    {
+        sum += $2; count++;
+        if (max == "" || $2 > max) max = $2;
+        if (min == "" || $2 < min) min = $2;
+    }
+    END { if (count > 0) printf "%.2f|%d|%d", sum/count, max, min; else printf "0|0|0"; }
+')
+
+IFS="|" read -r AVG MAX MIN <<< "$STATS"
+
+echo "────────────────────────────────────────────────────────────────────────────"
+echo "📈 ИТОГИ:"
+echo "  🔹 Средняя сложность:  $AVG"
+echo "  🔺 Макс. сложность:    $MAX"
+echo "  🔻 Мин. сложность:     $MIN"
+echo "────────────────────────────────────────────────────────────────────────────"
+
+if [ "$MAX" -gt 10 ]; then
+    echo "⚠️  Функции со сложностью > 10 нужно рефакторить."
+fi

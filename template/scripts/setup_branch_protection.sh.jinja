@@ -1,0 +1,38 @@
+#!/bin/bash
+# Настройка branch protection rules для GitHub репозитория
+# Требует: gh CLI + права admin на репо
+# Запуск: just protect  или  bash scripts/setup_branch_protection.sh
+
+OWNER="{{ github_org }}"
+REPO="{{ project_slug }}"
+
+echo "🔒 Настройка branch protection для ${OWNER}/${REPO}..."
+
+# ── main: только из dev, требует PR + статус-чеки ─────────────────────────────
+echo "  → main..."
+gh api "repos/${OWNER}/${REPO}/branches/main/protection" \
+    --method PUT \
+    --header "Accept: application/vnd.github+json" \
+    --field required_status_checks='{"strict":true,"contexts":["quality","test","docker"]}' \
+    --field enforce_admins=true \
+    --field required_pull_request_reviews='{"required_approving_review_count":1,"dismiss_stale_reviews":true}' \
+    --field restrictions=null \
+    --field allow_force_pushes=false \
+    --field allow_deletions=false
+
+# ── dev: требует PR + статус-чеки, без force push ─────────────────────────────
+echo "  → dev..."
+gh api "repos/${OWNER}/${REPO}/branches/dev/protection" \
+    --method PUT \
+    --header "Accept: application/vnd.github+json" \
+    --field required_status_checks='{"strict":false,"contexts":["quality","test"]}' \
+    --field enforce_admins=false \
+    --field required_pull_request_reviews='{"required_approving_review_count":1}' \
+    --field restrictions=null \
+    --field allow_force_pushes=false \
+    --field allow_deletions=false
+
+echo ""
+echo "✅ Branch protection настроен:"
+echo "   main ← только из dev, 1 approve, CI обязателен"
+echo "   dev  ← любые ветки, 1 approve, CI обязателен"

@@ -1,0 +1,79 @@
+# {{ project_name }}
+
+> {{ description }}
+
+![Python](https://img.shields.io/badge/python-{{ python_version }}-blue)
+![Version](https://img.shields.io/badge/version-0.1.0-green)
+[![CI](https://github.com/{{ github_org }}/{{ project_slug }}/actions/workflows/ci.yml/badge.svg)](https://github.com/{{ github_org }}/{{ project_slug }}/actions/workflows/ci.yml)
+
+**Author:** {{ author_name }} <{{ author_email }}>
+**Org:** [{{ github_org }}](https://github.com/{{ github_org }})
+
+---
+
+## Overview
+
+<!-- TODO: опиши что делает этот проект -->
+
+---
+
+## Quick Start
+
+```bash
+cp .env.example .env   # заполни значения
+just setup             # установка зависимостей + pre-commit
+just dev               # запустить docker стек
+```
+
+---
+
+## Project Structure
+
+```
+src/{{ project_slug }}/   # основной пакет
+├── core/
+│   └── logging.py        # setup_logging() — loguru
+tests/                    # pytest тесты
+docker/                   # Dockerfiles
+scripts/                  # dev утилиты
+```
+
+---
+
+## Commands
+
+| Command | Description |
+|---|---|
+| `just dev` | Запустить docker стек |
+| `just test` | Запустить тесты |
+| `just check` | Format + lint |
+| `just complexity` | Анализ сложности кода |
+| `just docker-stats` | Метрики Docker образа |
+| `just version-bump` | Новая версия + CHANGELOG |
+| `just --list` | Все доступные команды |
+
+---
+
+## Branch Strategy
+
+```
+main  ←  только из dev (требует PR + CI)
+dev   ←  feature/*, fix/*, chore/*
+```
+
+Настроить protection rules:
+```bash
+just protect
+```
+
+---
+
+## Development
+
+<!-- TODO: опиши как контрибьютить, процесс PR, code review -->
+
+---
+
+## License
+
+<!-- TODO: добавь лицензию -->

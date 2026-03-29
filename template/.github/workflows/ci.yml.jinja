@@ -1,0 +1,118 @@
+name: CI
+
+on:
+  push:
+    branches: [dev, "feature/**", "chore/**", "fix/**", "refactor/**"]
+  pull_request:
+    branches: [dev, main]
+
+concurrency:
+  group: {% raw %}${{ github.workflow }}-${{ github.ref }}{% endraw %}
+  cancel-in-progress: true
+
+jobs:
+
+  # ── Code Quality ─────────────────────────────────────────────────────────────
+  quality:
+    name: Code Quality
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
+        with:
+          version: "latest"
+          enable-cache: true
+
+      - name: Set up Python {{ python_version }}
+        run: uv python install {{ python_version }}
+
+      - name: Install dependencies
+        run: uv sync --dev --frozen
+
+      - name: Ruff lint
+        run: uv run ruff check src/ tests/
+
+      - name: Ruff format check
+        run: uv run ruff format src/ tests/ --check
+
+      - name: Deptry
+        run: uv run deptry src/
+
+  # ── Tests ─────────────────────────────────────────────────────────────────────
+  test:
+    name: Tests
+    runs-on: ubuntu-latest
+    needs: quality
+    {% if include_postgres or include_redis %}
+    services:
+      {% if include_postgres %}
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: {{ project_slug }}_db_test
+          POSTGRES_USER: {{ project_slug }}
+          POSTGRES_PASSWORD: test_password
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 5
+      {% endif %}
+      {% if include_redis %}
+      redis:
+        image: redis:7-alpine
+        ports: ["6379:6379"]
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 5
+      {% endif %}
+    {% endif %}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
+        with:
+          version: "latest"
+          enable-cache: true
+
+      - name: Install dependencies
+        run: uv sync --dev --frozen
+
+      - name: Run tests
+        env:
+          LOG_LEVEL: WARNING
+          ENVIRONMENT: test
+          {% if include_postgres %}
+          DATABASE_URL: postgresql+asyncpg://{{ project_slug }}:test_password@localhost:5432/{{ project_slug }}_db_test
+          {% endif %}
+          {% if include_redis %}
+          REDIS_URL: redis://localhost:6379/0
+          {% endif %}
+        run: uv run pytest tests/ -v --tb=short
+
+  # ── Docker Build Check ────────────────────────────────────────────────────────
+  docker:
+    name: Docker Build
+    runs-on: ubuntu-latest
+    needs: quality
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build app image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: docker/app/Dockerfile
+          push: false
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          tags: {{ project_slug }}-app:ci
