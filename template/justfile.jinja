@@ -64,7 +64,8 @@ install:
 # Первоначальная настройка проекта
 setup: install
     uv python pin {{ python_version }}
-    uv run pre-commit install
+    uv tool install prek
+    prek install
     @echo "✅ Готово. Запусти 'just dev'."
 
 # Настроить branch protection в GitHub (запускается один раз)
