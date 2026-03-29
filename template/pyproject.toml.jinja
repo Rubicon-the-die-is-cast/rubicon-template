@@ -32,7 +32,6 @@ packages = ["src/{{ project_slug }}"]
 # ── Ruff ──────────────────────────────────────────────────────────────────────
 [tool.ruff]
 line-length = 100
-target-version = "py{{ python_version | replace('.', '') }}"
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "N", "W", "UP", "B", "C4"]
