@@ -1,0 +1,25 @@
+"""Application settings via pydantic-settings.
+
+Reads from environment variables and .env file automatically.
+
+Usage:
+    from {{ project_slug }}.core.settings import settings
+    print(settings.log_level)
+"""
+
+from pydantic_settings import BaseSettings, SettingsConfigDict
+
+
+class Settings(BaseSettings):
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        env_file_encoding="utf-8",
+        case_sensitive=False,
+    )
+
+    log_level: str = "INFO"
+    environment: str = "development"
+    app_port: int = {{ app_port }}
+
+
+settings = Settings()
