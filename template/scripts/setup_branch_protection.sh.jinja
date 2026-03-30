@@ -13,24 +13,43 @@ echo "  → main..."
 gh api "repos/${OWNER}/${REPO}/branches/main/protection" \
     --method PUT \
     --header "Accept: application/vnd.github+json" \
-    --field required_status_checks='{"strict":true,"contexts":["quality","test","docker"]}' \
-    --field enforce_admins=true \
-    --field required_pull_request_reviews='{"required_approving_review_count":1,"dismiss_stale_reviews":true}' \
-    --field restrictions=null \
-    --field allow_force_pushes=false \
-    --field allow_deletions=false
+    --input - <<'EOF'
+{
+  "required_status_checks": {
+    "strict": true,
+    "contexts": ["quality", "test", "docker"]
+  },
+  "enforce_admins": true,
+  "required_pull_request_reviews": {
+    "required_approving_review_count": 1,
+    "dismiss_stale_reviews": true
+  },
+  "restrictions": null,
+  "allow_force_pushes": false,
+  "allow_deletions": false
+}
+EOF
 
 # ── dev: требует PR + статус-чеки, без force push ─────────────────────────────
 echo "  → dev..."
 gh api "repos/${OWNER}/${REPO}/branches/dev/protection" \
     --method PUT \
     --header "Accept: application/vnd.github+json" \
-    --field required_status_checks='{"strict":false,"contexts":["quality","test"]}' \
-    --field enforce_admins=false \
-    --field required_pull_request_reviews='{"required_approving_review_count":1}' \
-    --field restrictions=null \
-    --field allow_force_pushes=false \
-    --field allow_deletions=false
+    --input - <<'EOF'
+{
+  "required_status_checks": {
+    "strict": false,
+    "contexts": ["quality", "test"]
+  },
+  "enforce_admins": false,
+  "required_pull_request_reviews": {
+    "required_approving_review_count": 1
+  },
+  "restrictions": null,
+  "allow_force_pushes": false,
+  "allow_deletions": false
+}
+EOF
 
 echo ""
 echo "✅ Branch protection настроен:"
