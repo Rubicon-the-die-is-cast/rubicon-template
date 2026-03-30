@@ -20,6 +20,7 @@ _tasks:
   - command: uv tool install prek || true
   - command: uvx prek install || true
   - command: chmod +x scripts/check_complexity.sh scripts/check_docker_stats.sh scripts/setup_branch_protection.sh
+  - command: uvx prek run --all-files || true
 
 # ─── PROJECT ──────────────────────────────────────────────────────────────────
 
