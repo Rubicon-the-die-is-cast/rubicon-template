@@ -10,7 +10,7 @@ echo "────────────────────────�
 START_TIME=$(date +%s)
 
 docker build --no-cache --progress=plain \
-    -f docker/python/Dockerfile \
+    -f docker/app/Dockerfile \
     -t "$IMAGE_NAME" . 2>&1
 
 BUILD_EXIT=$?
