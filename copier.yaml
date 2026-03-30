@@ -45,15 +45,16 @@ description:
 author_name:
   type: str
   help: "Your full name"
+  default: "Dauletkhan Narynbayev"
 
 author_email:
   type: str
   help: "Your email address"
+  default: "dauletkhannarynbaev@gmail.com"
 
 github_org:
   type: str
   help: "GitHub organization or username"
-  default: "my-org"
 
 # ─── PYTHON ───────────────────────────────────────────────────────────────────
 
