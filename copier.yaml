@@ -20,9 +20,9 @@ _tasks:
   - command: uv python pin {{ python_version }}
   - command: uv sync --dev
   - command: uv tool install prek || true
-  - command: uvx prek install || true
+  - command: git rev-parse --git-dir > /dev/null 2>&1 && uvx prek install || true
   - command: chmod +x scripts/check_complexity.sh scripts/check_docker_stats.sh scripts/setup_branch_protection.sh
-  - command: uvx prek run --all-files || true
+  - command: git rev-parse --git-dir > /dev/null 2>&1 && uvx prek run --all-files || true
 
 # ─── PROJECT ──────────────────────────────────────────────────────────────────
 
