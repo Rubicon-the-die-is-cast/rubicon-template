@@ -55,6 +55,7 @@ author_email:
 github_org:
   type: str
   help: "GitHub organization or username"
+  default: "Rubicon-the-die-is-cast"
 
 # ─── PYTHON ───────────────────────────────────────────────────────────────────
 
