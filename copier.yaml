@@ -1,6 +1,6 @@
 _subdirectory: template
 _templates_suffix: .jinja
-_answers_file: .copier-answers.yml
+_answers_file: template/.copier-answers.yml
 _min_copier_version: "9.0"
 _envops:
   lstrip_blocks: true
